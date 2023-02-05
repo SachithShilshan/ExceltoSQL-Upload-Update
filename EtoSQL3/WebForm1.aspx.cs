@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.OleDb;
 using System.Data.SqlClient;
 using System.Drawing;
@@ -13,6 +14,12 @@ using System.Web.Services.Description;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Xml.Linq;
+using System.Data;
+using System.Data.SqlClient;
+using System.IO;
+using System.Data.OleDb;
+using System.Collections;
+using System.Runtime.InteropServices;
 
 
 namespace EtoSQL3
@@ -26,6 +33,52 @@ namespace EtoSQL3
         protected void Page_Load(object sender, EventArgs e)
         {
 
+        }
+
+        protected void ViewDataClick(object sender, EventArgs e)
+        {
+            ViewDataClick(sender, e, GridView1);
+        }
+
+        protected void ViewDataClick(object sender, EventArgs e, GridView gridView1)
+        {
+            Response.ClearContent();
+            Response.Buffer = true;
+            Response.AddHeader("content-disposition", string.Format("attachment; filename={0}", "Plan.xls"));
+            Response.ContentType = "application/ms-excel";
+            StringWriter sw = new StringWriter();
+            HtmlTextWriter htw = new HtmlTextWriter(sw);
+            GridView1.AllowPaging = false;
+            GridView1.HeaderRow.Style.Add("background-color", "#FFFFFF");
+            for (int i = 0; i < GridView1.HeaderRow.Cells.Count; i++)
+            {
+                GridView1.HeaderRow.Cells[i].Style.Add("background-color", "#507CD1");
+            }
+            int j = 1;
+            foreach (GridViewRow gvrow in GridView1.Rows)
+            {
+                gvrow.BackColor = System.Drawing.Color.White;
+                if (j <= GridView1.Rows.Count)
+                {
+                    if (j % 2 != 0)
+                    {
+                        for (int k = 0; k < gvrow.Cells.Count; k++)
+                        {
+                            gvrow.Cells[k].Style.Add("background-color", "#EFF3FB");
+                        }
+                    }
+                }
+                j++;
+            }
+
+            gridView1.RenderControl(htw);
+            Response.Write(sw.ToString());
+            Response.End();
+        }
+        
+        public override void VerifyRenderingInServerForm(Control control)
+        {
+            /* Verifies that the control is rendered */
         }
 
         protected void Upload_Click(object sender, EventArgs e) 
@@ -107,9 +160,12 @@ namespace EtoSQL3
             mycon.Close();
             File.Delete(ExcelPath);
 
+
+            // Rebind the data to the GridView
+            GridView1.DataBind();
         }
 
-        protected void Update_Click(object sender, EventArgs e)
+       /* protected void Update_Click(object sender, EventArgs e)
         {
             int rollno;
             String sname;
@@ -142,7 +198,7 @@ namespace EtoSQL3
             Label4.Text = "Data Has Been Updated Successfully";
             mycon.Close();
             File.Delete(ExcelPath);
-        }
+        }*/
 
         protected void Delete_Upload_Click(object sender, EventArgs e)
         {
@@ -281,9 +337,23 @@ namespace EtoSQL3
                 deliv_date, del_status, cut_qty, in_qty, out_qty, fab_In_H_date, acc_In_H_date, qco, product_category_Name, gender,
                 relative_Similarity, remarks, l_Curve, planning_Fab, planning_acc, approval_DD, section); //req....
             }
+            dr1.Close();
             Label3.Text = "Data Has Been Saved Successfully";
+
+
+            OleDbDataAdapter da = new OleDbDataAdapter();
+            da.SelectCommand = cmd;
+            DataSet ds = new DataSet();
+            da.Fill(ds);
+            GridView.DataSource = ds.Tables[0];
+            GridView.DataBind();
+
+
             mycon.Close();
             File.Delete(ExcelPath);
+
+            // Rebind the data to the GridView
+            GridView1.DataBind();
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -349,5 +419,9 @@ namespace EtoSQL3
 
         }
 
+        protected void Unnamed5_Selecting(object sender, SqlDataSourceSelectingEventArgs e)
+        {
+
+        }
     }
 }
